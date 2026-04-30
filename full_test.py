@@ -3,12 +3,43 @@ import numpy as np
 import mediapipe as mp
 from rembg import remove
 from PIL import Image
+import pandas as pd
+import sys
+import os
+
+# -----------------------------
+# INPUT PRODUCT ID
+# -----------------------------
+
 
 # -----------------------------
 # PATHS
 # -----------------------------
 person_path = r"C:\Users\shril\Documents\GitHub\Internship\multi-community-e-commerce-platform\person\p1.jpg"
-garment_path = r"C:\Users\shril\Documents\GitHub\Internship\multi-community-e-commerce-platform\try_on_img\img2.jpg"
+csv_path = "csv1.csv"
+image_folder = r"C:\Users\shril\Documents\GitHub\Internship\multi-community-e-commerce-platform\try_on_img"
+
+# -----------------------------
+# LOAD CSV
+# -----------------------------
+df = pd.read_csv(csv_path)
+
+# -----------------------------
+# GET IMAGE PATH FROM CSV
+# -----------------------------
+product_id = 1
+row = df[df["product_id"] == product_id]
+
+if row.empty:
+    raise Exception(f"❌ product_id {product_id} not found")
+
+row = row.iloc[0]
+
+garment_name = str(row["image_path"]).strip()
+
+garment_path = os.path.join(image_folder, garment_name)
+
+print("✅ Using garment:", garment_path)
 
 # -----------------------------
 # LOAD + REMOVE BG
@@ -39,7 +70,7 @@ right_sh = (int(lm[11].x * w), int(lm[11].y * h))
 print("Shoulders:", left_sh, right_sh)
 
 # -----------------------------
-# 🔥 GARMENT SHOULDER LINE (YOUR IDEA)
+# GARMENT SHOULDER LINE
 # -----------------------------
 alpha = garment_rgba[:, :, 3]
 
@@ -50,8 +81,7 @@ if len(rows) == 0:
 top = rows[0]
 bottom = rows[-1]
 
-# 👉 move down ~7% of garment height (your "2 inch")
-g_y = top + int(0.07 * (bottom - top))
+g_y = top + int(0.05 * (bottom - top))
 
 cols = np.where(alpha[g_y] > 0)[0]
 if len(cols) < 10:
@@ -67,7 +97,7 @@ if garment_width < 20:
 print("Garment points:", g_left, g_right, g_y)
 
 # -----------------------------
-# SCALE WIDTH (SHOULDER MATCH)
+# SCALE WIDTH
 # -----------------------------
 body_width = np.linalg.norm(np.array(left_sh) - np.array(right_sh))
 scale_x = body_width / garment_width
@@ -80,7 +110,7 @@ garment_scaled = cv2.resize(
 )
 
 # -----------------------------
-# UPDATE GARMENT POINTS
+# UPDATE POINTS
 # -----------------------------
 g_left = int(g_left * scale_x)
 g_right = int(g_right * scale_x)
@@ -99,30 +129,24 @@ x = body_center[0] - g_center
 y = body_center[1] - g_y
 
 # -----------------------------
-# 🔥 HEIGHT FIX (NO SHIFT — ONLY SCALE)
+# HEIGHT FIX
 # -----------------------------
-# garment bottom
 g_alpha = garment_scaled[:, :, 3]
 g_rows = np.where(np.any(g_alpha > 0, axis=1))[0]
 g_bottom = g_rows[-1]
 
-# person bottom
 p_alpha = person_rgba[:, :, 3]
 p_rows = np.where(np.any(p_alpha > 0, axis=1))[0]
 p_bottom = p_rows[-1]
 
-# compute vertical scale
 current_height = g_bottom - g_y
 target_height = (p_bottom + 5) - y
 
 scale_y = target_height / current_height
-
-# clamp to avoid weird stretching
 scale_y = np.clip(scale_y, 0.8, 1.8)
 
 print("Vertical scale:", scale_y)
 
-# apply Y scaling only
 final_h = int(new_h * scale_y)
 
 garment_scaled = cv2.resize(
@@ -131,10 +155,7 @@ garment_scaled = cv2.resize(
     interpolation=cv2.INTER_AREA
 )
 
-# update Y anchor after scaling
 g_y = int(g_y * scale_y)
-
-# reapply exact position (NO SHIFT LOGIC)
 y = body_center[1] - g_y
 
 # -----------------------------

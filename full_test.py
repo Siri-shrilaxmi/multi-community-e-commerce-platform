@@ -9,7 +9,7 @@ import os
 # -----------------------------
 # PATHS
 # -----------------------------
-person_path = r"C:\Users\shril\Documents\GitHub\Internship\multi-community-e-commerce-platform\person\p2.jpg"
+person_path = r"C:\Users\shril\Documents\GitHub\Internship\multi-community-e-commerce-platform\person\p11.webp"
 csv_path = "csv1.csv"
 image_folder = r"C:\Users\shril\Documents\GitHub\Internship\multi-community-e-commerce-platform\try_on_img"
 
@@ -18,7 +18,7 @@ image_folder = r"C:\Users\shril\Documents\GitHub\Internship\multi-community-e-co
 # -----------------------------
 df = pd.read_csv(csv_path)
 
-product_id = 2
+product_id = 10
 row = df[df["product_id"] == product_id]
 
 if row.empty:
@@ -42,29 +42,23 @@ print("Type:", "TOP" if is_top else "BOTTOM")
 print("Length:", length_type)
 
 # -----------------------------
-# OFFSET TABLE (NEW CORE ADDITION)
+# OFFSET TABLE
 # -----------------------------
 OFFSET_TABLE = {
-    # FULL LENGTH TOPS
     ("sleeve", "full_length"): (-0.018, 0.00),
     ("sleeveless", "full_length"): (0.001, 0.0),
     ("strapless", "full_length"): (0.00, -0.01),
 
-    # WAIST LENGTH TOPS
     ("sleeve", "waist_length"): (0.00, -0.02),
     ("sleeveless", "waist_length"): (0.00, -0.02),
-    ("strapless", "waist_length"): (0.00, -0.03),
+    ("strapless", "waist_length"): (0.00, -0.00),
 
-    # CROPPED TOPS (optional future)
-    ("sleeve", "cropped"): (0.00, 0.01),
-    ("sleeveless", "cropped"): (0.00, 0.01),
+    ("sleeve", "cropped"): (0.00, -0.03),
+    ("sleeveless", "cropped"): (-0.02, -0.03),
     ("strapless", "cropped"): (0.00, 0.00),
 }
 
-x_shift_mul, y_shift_mul = OFFSET_TABLE.get(
-    (sleeve, length_type),
-    (0.0, 0.0)
-)
+x_shift_mul, y_shift_mul = OFFSET_TABLE.get((sleeve, length_type), (0.0, 0.0))
 
 # -----------------------------
 # LOAD IMAGES
@@ -90,6 +84,14 @@ lm = res.pose_landmarks.landmark
 left_sh = (int(lm[12].x * w), int(lm[12].y * h))
 right_sh = (int(lm[11].x * w), int(lm[11].y * h))
 
+left_hip = (int(lm[23].x * w), int(lm[23].y * h))
+right_hip = (int(lm[24].x * w), int(lm[24].y * h))
+
+body_center = (
+    (left_sh[0] + right_sh[0]) // 2,
+    (left_sh[1] + right_sh[1]) // 2
+)
+
 # -----------------------------
 # GARMENT DETECTION
 # -----------------------------
@@ -105,9 +107,6 @@ bottom = rows[-1]
 g_y = top + int(0.05 * (bottom - top))
 cols = np.where(alpha[g_y] > 0)[0]
 
-if len(cols) < 10:
-    raise Exception("❌ Weak garment detection")
-
 g_left = int(np.percentile(cols, 10))
 g_right = int(np.percentile(cols, 90))
 
@@ -119,9 +118,7 @@ scale_x = body_width / garment_width
 new_w = int(garment_rgba.shape[1] * scale_x)
 new_h = int(garment_rgba.shape[0] * scale_x)
 
-garment_scaled = cv2.resize(
-    garment_rgba, (new_w, new_h), interpolation=cv2.INTER_AREA
-)
+garment_scaled = cv2.resize(garment_rgba, (new_w, new_h), interpolation=cv2.INTER_AREA)
 
 # -----------------------------
 # UPDATE POINTS
@@ -131,15 +128,10 @@ g_right = int(g_right * scale_x)
 g_y = int(g_y * scale_x)
 
 # -----------------------------
-# BASE POSITION (UNCHANGED)
+# BASE POSITION
 # -----------------------------
 if is_top:
     g_center = (g_left + g_right) // 2
-    body_center = (
-        (left_sh[0] + right_sh[0]) // 2,
-        (left_sh[1] + right_sh[1]) // 2
-    )
-
     x = body_center[0] - g_center
     y = body_center[1] - g_y
 else:
@@ -147,7 +139,69 @@ else:
     y = h // 2 - new_h // 2
 
 # -----------------------------
-# APPLY OFFSET (FINAL STEP ONLY)
+# FULL LENGTH
+# -----------------------------
+if is_full_length:
+
+    p_rows = np.where(np.any(person_rgba[:, :, 3] > 0, axis=1))[0]
+    p_bottom = p_rows[-1]
+
+    g_rows = np.where(np.any(garment_scaled[:, :, 3] > 0, axis=1))[0]
+    g_bottom = g_rows[-1]
+
+    current_height = g_bottom - g_y
+    target_height = (p_bottom + 5) - y
+
+    scale_y = np.clip(target_height / current_height, 0.8, 1.8)
+
+    garment_scaled = cv2.resize(
+        garment_scaled,
+        (new_w, int(garment_scaled.shape[0] * scale_y)),
+        interpolation=cv2.INTER_AREA
+    )
+
+# -----------------------------
+# WAIST LENGTH
+# -----------------------------
+elif is_top and length_type == "waist_length":
+
+    waist_y = (left_hip[1] + right_hip[1]) // 2
+
+    g_rows = np.where(np.any(garment_scaled[:, :, 3] > 0, axis=1))[0]
+    g_bottom = g_rows[-1]
+
+    current_height = g_bottom - g_y
+
+    scale_y = (waist_y - (body_center[1] - g_y)) / current_height if current_height > 0 else 1.0
+    scale_y = np.clip(scale_y, 0.6, 1.5)
+
+    garment_scaled = cv2.resize(
+        garment_scaled,
+        (new_w, int(garment_scaled.shape[0] * scale_y)),
+        interpolation=cv2.INTER_AREA
+    )
+
+# -----------------------------
+# CROPPED
+# -----------------------------
+elif is_top and length_type == "cropped":
+
+    shoulder_y = body_center[1]
+    waist_y = (left_hip[1] + right_hip[1]) // 2
+
+    target_y = int(0.4 * shoulder_y + 0.6 * waist_y)
+
+    g_rows = np.where(np.any(garment_scaled[:, :, 3] > 0, axis=1))[0]
+    g_bottom = g_rows[-1]
+
+    garment_bottom_y = y + g_bottom
+
+    if garment_bottom_y > target_y:
+        trim = garment_bottom_y - target_y
+        garment_scaled = garment_scaled[:-trim, :, :]
+
+# -----------------------------
+# OFFSET
 # -----------------------------
 x += int(x_shift_mul * w)
 y += int(y_shift_mul * h)
@@ -188,4 +242,4 @@ result = overlay(person_rgba.copy(), garment_scaled, x, y)
 
 cv2.imwrite("final_result.png", cv2.cvtColor(result, cv2.COLOR_RGBA2BGR))
 
-print("✅ DONE — CSV-driven offset try-on working")
+print("✅ DONE — try-on completed")

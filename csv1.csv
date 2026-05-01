@@ -1,6 +1,10 @@
 product_id,name,community,category,family,price,rating,tags,gender,size,color,sleeve,waist,length,occasion,image_path
 1,red_plane_saree,hindu,saree,garnment,2500.00,4.5,red;saree;plane;gold_border;eligant;traditional,female,free_size,red,sleeve,n/a,full_length,casual;cultural;festival,img1.png 
 2,orange_traditional_saree,hindu,saree,garnment,2000.00,3.0,gold;saree;silver_border;eligant;traditional,female,free_size,orange,sleeveless,n/a,full_length,casual;cultural;festival,img2.jpg
-3,purple_stylish_saree,hindu,saree,garnment,5000.00,4.0,purple;saree;golden_border;stylish;modren,female,free_size,purple,sleeveless,n/a,full_length,function;cultural;festival,img5.png
+3,purple_stylish_saree,hindu,saree,garnment,5000.00,4.0,purple;saree;golden_border;stylish;modren,female,free_size,purple,sleeveless,n/a,full_length,function;cultural;festival,img3.jpg
+5,red_designer_saree,hindu,saree,garnment,6500.00,2.8,red;saree;designer;golden_border;eligant,female,free_size,red,sleeve,n/a,full_length,cultural;festival,img5.png
 4,red_dotted_crop_top,all,top,garnment,800.00,4.2,red;crop_top;dotted;casual;trendy,female,S;M;L,red,sleeveless,n/a,cropped,casual;party,img4.webp
+6,orange_casual_salvaar_suit,hindu,salvaar_suit,garnment,1500.00,3.5,orange;salvaar_suit;casual;cotton;comfortable,female,S;M;L;XL,orange,sleeve,n/a,full_length,casual,img6.jpg
+9,yellow_blouse_orange_pallu_half_saree,hindu,half_saree,garnment,8000.00,4.8,yellow;orange_pallu;saree;half_saree;comfortable,female,L;XL,yellow,sleeve,n/a,full_length,festival;cultural;party,img9.webp
+10,red_golden_langa_davani,hindu,langa_davani,garnment,8500.00,4.3,red;golden_langa_davani;eligant;traditional,female,L;XL,red;golden,sleeve,n/a,full_length,festival;cultural;party,img10.jpg    
 11,blue_tshirt,all,t-shirt,garnment,500.00,4.0,blue;t-shirt;casual;trendy;comfortable,female,S;M;L;XL,blue,sleeve,n/a,waist_length,casual,img11.jpg

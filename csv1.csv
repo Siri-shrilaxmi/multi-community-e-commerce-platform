@@ -3,3 +3,4 @@ product_id,name,community,category,family,price,rating,tags,gender,size,color,sl
 2,orange_traditional_saree,hindu,saree,garnment,2000.00,3.0,gold;saree;silver_border;eligant;traditional,female,free_size,orange,sleeveless,n/a,full_length,casual;cultural;festival,img2.jpg
 3,purple_stylish_saree,hindu,saree,garnment,5000.00,4.0,purple;saree;golden_border;stylish;modren,female,free_size,purple,sleeveless,n/a,full_length,function;cultural;festival,img5.png
 4,red_dotted_crop_top,all,top,garnment,800.00,4.2,red;crop_top;dotted;casual;trendy,female,S;M;L,red,sleeveless,n/a,cropped,casual;party,img4.webp
+11,blue_tshirt,all,t-shirt,garnment,500.00,4.0,blue;t-shirt;casual;trendy;comfortable,female,S;M;L;XL,blue,sleeve,n/a,waist_length,casual,img11.jpg

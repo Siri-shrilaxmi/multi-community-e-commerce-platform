@@ -1,0 +1,160 @@
+<h2 style="text-align:center; margin-top:30px;">Recommended Products</h2>
+
+{% if results %}
+  {% for item in results %}
+
+    <div style="
+        display:flex;
+        gap:20px;
+        border:1px solid #ddd;
+        padding:15px;
+        margin:15px auto;
+        max-width:800px;
+        border-radius:10px;
+        background:#ffffff;
+        box-shadow:0 2px 6px rgba(0,0,0,0.1);
+        align-items:center;
+    ">
+
+      <!-- LEFT: IMAGE -->
+      <div>
+        <img src="/product_image/{{ item.image_path }}" width="180" style="border-radius:8px;">
+      </div>
+
+      <!-- RIGHT: DETAILS -->
+      <div style="flex:1;">
+
+        <h3 style="margin:0 0 8px 0;">{{ item.name }}</h3>
+
+        <p style="margin:4px 0;"><b>Price:</b> ₹{{ item.price }}</p>
+        <p style="margin:4px 0;"><b>Rating:</b> {{ item.rating }}</p>
+
+        <p style="color:#555;">{{ item.explanation }}</p>
+
+        {% if item.family == "garnment" or item.sleeve != "n/a" %}
+        <form method="POST" action="/" style="margin-top:10px;">
+          <input type="hidden" name="product_id" value="{{ item.product_id }}">
+          <input type="hidden" name="action" value="tryon">
+
+          <button style="
+              padding:8px 12px;
+              background:#28a745;
+              color:white;
+              border:none;
+              border-radius:5px;
+              cursor:pointer;
+          ">
+            Try On
+          </button>
+        </form>
+        {% endif %}
+
+      </div>
+
+    </div>
+
+  {% endfor %}
+{% endif %}
+
+
+<!-- ========================= -->
+<!-- 🔥 TRY-ON SECTION -->
+<!-- ========================= -->
+
+{% if show_tryon and selected_product %}
+
+<hr style="margin:40px 0;">
+
+<h2 style="text-align:center;">Virtual Try-On</h2>
+
+<div style="
+    display:flex;
+    gap:40px;
+    justify-content:center;
+    align-items:flex-start;
+    margin-top:30px;
+">
+
+  <!-- LEFT: PRODUCT -->
+  <div style="text-align:center;">
+    <h3>{{ selected_product.name }}</h3>
+    <img src="/product_image/{{ selected_product.image_path }}" width="250" style="border-radius:10px;">
+  </div>
+
+  <!-- RIGHT: USER ACTIONS -->
+  <div style="
+      border:1px solid #ddd;
+      padding:20px;
+      border-radius:10px;
+      background:#f9f9f9;
+      width:300px;
+  ">
+
+    <!-- TRY-ON FORM -->
+    <form method="POST" action="/run_tryon" enctype="multipart/form-data">
+      <input type="hidden" name="product_id" value="{{ selected_product.product_id }}">
+
+      <label><b>Upload Your Image:</b></label><br><br>
+      <input type="file" name="person_image" required><br><br>
+
+      <button style="
+          width:100%;
+          padding:10px;
+          background:#007bff;
+          color:white;
+          border:none;
+          border-radius:5px;
+          cursor:pointer;
+      ">
+        Run Try-On
+      </button>
+    </form>
+
+    <br>
+
+    <!-- RESULT -->
+    {% if result_image %}
+      <h3 style="text-align:center;">Result</h3>
+      <img src="/result_image/{{ result_image }}" width="100%" style="border-radius:10px;">
+    {% endif %}
+
+    <br><br>
+
+    <!-- SIZE FORM -->
+    <form method="POST" action="/get_size">
+      <input type="hidden" name="product_id" value="{{ selected_product.product_id }}">
+      <input type="hidden" name="image_path" value="{{ last_uploaded_image }}">
+
+      <h3>Size Recommendation</h3>
+
+      <label>Height (cm):</label><br>
+      <input type="number" name="height" required style="
+          width:100%;
+          padding:8px;
+          margin-top:5px;
+      "><br><br>
+
+      <button style="
+          width:100%;
+          padding:10px;
+          background:#28a745;
+          color:white;
+          border:none;
+          border-radius:5px;
+          cursor:pointer;
+      ">
+        Get Size
+      </button>
+    </form>
+
+    {% if size_result %}
+      <h4 style="margin-top:15px; text-align:center;">
+        Recommended Size: {{ size_result }}
+      </h4>
+    {% endif %}
+
+  </div>
+
+</div>
+
+{% endif %}

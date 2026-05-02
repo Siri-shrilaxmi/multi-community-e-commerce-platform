@@ -8,7 +8,7 @@ class BodyMeasurementSystem:
         self.pose = self.mp_pose.Pose(static_image_mode=True, min_detection_confidence=0.5)
 
     def get_measurements_and_size(self, image_path, height_cm, gender):
-        # 1. Image and Pose Setup
+        # Image and Pose Setup
         img = cv2.imread(image_path)
         if img is None: return {"error": "Image file not found"}
         h, w, _ = img.shape
@@ -17,8 +17,8 @@ class BodyMeasurementSystem:
         
         lm = results.pose_landmarks.landmark
 
-        # 2. DIMENSION CALCULATION (Using Reference Height)
-        # Use the vertical distance from Nose to Ankle as the height reference in pixels
+        # DIMENSION CALCULATION (Using Reference Height)
+        #(from nose to ankle)
         pixel_height = abs(lm[self.mp_pose.PoseLandmark.NOSE].y - 
                            lm[self.mp_pose.PoseLandmark.LEFT_ANKLE].y) * h
         cm_per_px = height_cm / pixel_height
@@ -28,24 +28,21 @@ class BodyMeasurementSystem:
             dist_px = np.sqrt(((p1.x - p2.x) * w)**2 + ((p1.y - p2.y) * h)**2)
             return dist_px * cm_per_px
 
-        # Calculate the 3 requested dimensions in CM
+        # Calculate the dimensions in CM
         shoulder_cm = get_dist(11, 12)
-        torso_cm = get_dist(11, 23) # Shoulder to Hip
+        torso_cm = get_dist(11, 23) 
         hip_cm = get_dist(23, 24)
 
-        # 3. CONVERSION FOR CHART COMPARISON
-        # Charts in the screenshots use Inches for Chest/Waist/Shoulder
+        # CONVERSION FOR CHART COMPARISON
         shoulder_in = shoulder_cm / 2.54
         # We estimate Chest/Waist using the width and a standard depth multiplier
         est_chest_in = (shoulder_cm * 2.1) / 2.54 
         est_waist_in = (hip_cm * 2.1) / 2.54
 
-        # 4. CHART COMPARISON LOGIC
+        # CHART COMPARISON LOGIC
         recommended = "S"
         
         if gender.lower() == 'male':
-            # Data from Screenshot 2026-05-01 170619.jpg
-            # Logic: If your measurement is LESS than or equal to the chart value, that's your size.
             male_chart = [
                 {"size": "S",    "sh": 17.0, "ch": 40.0},
                 {"size": "M",    "sh": 17.5, "ch": 42.0},
@@ -58,10 +55,9 @@ class BodyMeasurementSystem:
                 if shoulder_in <= row["sh"] and est_chest_in <= row["ch"]:
                     recommended = row["size"]
                     break
-            else: recommended = "XXXL" # Default to largest if over limits
-
+            else: recommended = "XXXL" # Default 
         else:
-            # Data from Screenshot 2026-05-01 170659.jpg
+
             female_chart = [
                 {"size": "S",   "sh": 14.5, "w": 33.0},
                 {"size": "M",   "sh": 15.0, "w": 35.0},
@@ -75,7 +71,7 @@ class BodyMeasurementSystem:
                     break
             else: recommended = "XXL"
 
-        # 5. FINAL OUTPUT
+        # FINAL OUTPUT
         return {
             "shoulder_width": f"{round(shoulder_cm, 1)} cm",
             "torso_length":   f"{round(torso_cm, 1)} cm",
@@ -83,8 +79,8 @@ class BodyMeasurementSystem:
             "recommended_size": recommended
         }
 
+# local run
 if __name__ == "__main__":
     system = BodyMeasurementSystem()
-    # Replace with your actual image path and known height
     res = system.get_measurements_and_size(r"C:\Users\shril\Documents\GitHub\Internship\multi-community-e-commerce-platform\person\p11.webp", 152, "female")
     print(res)

@@ -6,33 +6,26 @@ from PIL import Image
 import pandas as pd
 import os
 
-# -----------------------------
-# DEFAULT PATHS (FOR LOCAL RUN)
-# -----------------------------
-person_path = r"C:\Users\shril\Documents\GitHub\Internship\multi-community-e-commerce-platform\person\p8.jpg"
+person_path = r"C:\Users\shril\Documents\GitHub\Internship\multi-community-e-commerce-platform\person\p1.jpg"
 csv_path = "csv1.csv"
 image_folder = r"C:\Users\shril\Documents\GitHub\Internship\multi-community-e-commerce-platform\try_on_img"
-product_id = 40
+product_id = 2
 
-# =============================
-# MAIN FUNCTION (ADDED)
-# =============================
+# MAIN FUNCTION
+
 def run_tryon_pipeline(person_path_input=None, product_id_input=None, output_path_input="final_result.png"):
 
     global person_path, product_id
 
-    # -----------------------------
     # OVERRIDE (FOR FLASK)
-    # -----------------------------
     if person_path_input is not None:
         person_path = person_path_input
 
     if product_id_input is not None:
         product_id = product_id_input
 
-    # -----------------------------
+
     # LOAD CSV
-    # -----------------------------
     df = pd.read_csv(csv_path)
 
     row = df[df["product_id"] == product_id]
@@ -45,9 +38,9 @@ def run_tryon_pipeline(person_path_input=None, product_id_input=None, output_pat
     garment_name = str(row["image_path"]).strip()
     garment_path = os.path.join(image_folder, garment_name)
 
-    # -----------------------------
+
     # CONDITIONS
-    # -----------------------------
+  
     sleeve = str(row["sleeve"]).lower()
     length_type = str(row["length"]).lower()
 
@@ -57,9 +50,9 @@ def run_tryon_pipeline(person_path_input=None, product_id_input=None, output_pat
     print("Type:", "TOP" if is_top else "BOTTOM")
     print("Length:", length_type)
 
-    # -----------------------------
+   
     # OFFSET TABLE
-    # -----------------------------
+
     OFFSET_TABLE = {
         ("sleeve", "full_length"): (-0.01, -0.02),
         ("sleeveless", "full_length"): (0.001, 0.0),
@@ -76,18 +69,18 @@ def run_tryon_pipeline(person_path_input=None, product_id_input=None, output_pat
 
     x_shift_mul, y_shift_mul = OFFSET_TABLE.get((sleeve, length_type), (0.0, 0.0))
 
-    # -----------------------------
+  
     # LOAD IMAGES
-    # -----------------------------
+
     person_rgba = np.array(remove(Image.open(person_path).convert("RGBA")))
     garment_rgba = np.array(remove(Image.open(garment_path).convert("RGBA")))
 
     person_rgb = person_rgba[:, :, :3]
     h, w = person_rgb.shape[:2]
 
-    # -----------------------------
+   
     # POSE DETECTION
-    # -----------------------------
+  
     mp_pose = mp.solutions.pose
     with mp_pose.Pose(static_image_mode=True) as pose:
         res = pose.process(person_rgb)
@@ -108,9 +101,9 @@ def run_tryon_pipeline(person_path_input=None, product_id_input=None, output_pat
         (left_sh[1] + right_sh[1]) // 2
     )
 
-    # -----------------------------
+
     # GARMENT DETECTION
-    # -----------------------------
+ 
     alpha = garment_rgba[:, :, 3]
 
     rows = np.where(np.any(alpha > 0, axis=1))[0]
@@ -136,16 +129,16 @@ def run_tryon_pipeline(person_path_input=None, product_id_input=None, output_pat
 
     garment_scaled = cv2.resize(garment_rgba, (new_w, new_h), interpolation=cv2.INTER_AREA)
 
-    # -----------------------------
+
     # UPDATE POINTS
-    # -----------------------------
+
     g_left = int(g_left * scale_x)
     g_right = int(g_right * scale_x)
     g_y = int(g_y * scale_x)
 
-    # -----------------------------
+  
     # BASE POSITION
-    # -----------------------------
+
     if is_top:
         g_center = (g_left + g_right) // 2
         x = body_center[0] - g_center
@@ -154,9 +147,9 @@ def run_tryon_pipeline(person_path_input=None, product_id_input=None, output_pat
         x = w // 2 - new_w // 2
         y = h // 2 - new_h // 2
 
-    # -----------------------------
+
     # FULL LENGTH
-    # -----------------------------
+
     if is_full_length:
 
         p_rows = np.where(np.any(person_rgba[:, :, 3] > 0, axis=1))[0]
@@ -176,9 +169,9 @@ def run_tryon_pipeline(person_path_input=None, product_id_input=None, output_pat
             interpolation=cv2.INTER_AREA
         )
 
-    # -----------------------------
+  
     # WAIST LENGTH
-    # -----------------------------
+
     elif is_top and length_type == "waist_length":
 
         waist_y = (left_hip[1] + right_hip[1]) // 2
@@ -197,9 +190,9 @@ def run_tryon_pipeline(person_path_input=None, product_id_input=None, output_pat
             interpolation=cv2.INTER_AREA
         )
 
-    # -----------------------------
+  
     # CROPPED
-    # -----------------------------
+   
     elif is_top and length_type == "cropped":
 
         shoulder_y = body_center[1]
@@ -216,15 +209,15 @@ def run_tryon_pipeline(person_path_input=None, product_id_input=None, output_pat
             trim = garment_bottom_y - target_y
             garment_scaled = garment_scaled[:-trim, :, :]
 
-    # -----------------------------
+
     # OFFSET
-    # -----------------------------
+ 
     x += int(x_shift_mul * w)
     y += int(y_shift_mul * h)
 
-    # -----------------------------
+   
     # OVERLAY
-    # -----------------------------
+   
     def overlay(bg, fg, x, y):
         bh, bw = bg.shape[:2]
         fh, fw = fg.shape[:2]
@@ -251,9 +244,9 @@ def run_tryon_pipeline(person_path_input=None, product_id_input=None, output_pat
 
         return bg
 
-    # -----------------------------
+   
     # APPLY
-    # -----------------------------
+   
     result = overlay(person_rgba.copy(), garment_scaled, x, y)
 
     cv2.imwrite(output_path_input, cv2.cvtColor(result, cv2.COLOR_RGBA2BGR))
@@ -262,9 +255,6 @@ def run_tryon_pipeline(person_path_input=None, product_id_input=None, output_pat
 
     return output_path_input
 
-
-# =============================
-# LOCAL RUN (UNCHANGED BEHAVIOR)
-# =============================
+# Local Run
 if __name__ == "__main__":
     run_tryon_pipeline()

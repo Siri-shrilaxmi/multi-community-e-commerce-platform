@@ -12,7 +12,7 @@ product_id,name,community,category,family,price,rating,tags,gender,size,color,sl
 11,blue_tshirt,all,t-shirt,garnment,500.00,4.0,blue;t-shirt;casual;trendy;comfortable,female,S;M;L;XL,blue,sleeve,n/a,waist_length,casual,img11.jpg
 12,golden_necklace_set,hindu,necklace_set,accessory;jewelry,12000.00,4.9,golden;necklace_set;eligant;traditional,female,free_size,golden,n/a,n/a,n/a,festival;cultural;functions,img12.jpg
 13,gold_green_chand_bala_earrings,hindu;muslim,earrings,accessory;jewelry,3000.00,4.6,gold;green;chand_bala;earrings;eligant;traditional,female,free_size,gold;green,n/a,n/a,n/a,festival;cultural;functions,img13.avif
-14,cream_color_red_flower_printed_kurta,hindu;muslim;sikh,kurta;salwar_suit,garnment,garnment,6200.00,3.8,cream_color;red_flower_printed;kurta;casual;cotton,female,S;M;L;XL,cream_color,sleeve,n/a,full_length,casual,img14.jpg
+14,cream_color_red_flower_printed_kurta,hindu;muslim;sikh,kurta;salwar_suit,garnment,6200.00,3.8,cream_color;red_flower_printed;kurta;casual;cotton,female,S;M;L;XL,cream_color,sleeve,n/a,full_length,casual,img14.jpg
 15,pink_long_designer_stylish_kurta,hindu;muslim;sikh,kurta;salwar_suit,garnment,10000.00,4.4,pink;long_designer_stylish;kurta;eligant,female,L;XL,pink,sleeve,n/a,full_length,casual;functions,img15.jpg
 16,golden_kurta_for_men,hindu,kurta_pajama,garnment,3000.00,1.2,white;kurta;eligant,male,L;XL;XXL,golden,sleeve,n/a,full_length,casual,img16.webp
 17,cream_chiffon_hijab,muslim,hijab,garnment,300.00,4.5,cream;chiffon;hijab;eligant;comfortable,female,free_size,cream,n/a,n/a,n/a,casual;religious,img17.jpg
@@ -53,4 +53,6 @@ product_id,name,community,category,family,price,rating,tags,gender,size,color,sl
 52,cream_turban,sikh,turban,accessory;garnment,200.00,4.4,cream;turban,female,free_size,cream,n/a,n/a,n/a,casual;religious,img52.jpg
 53,white_turban,sikh,turban,accessory;garnment,250.00,4.1,white;turban,female,free_size,white,n/a,n/a,n/a,casual;religious,img53.webp
 54,dark_blue_turban,sikh,turban,accessory;garnment,400.00,4.5,dark_blue;turban,female,free_size,dark_blue,n/a,n/a,n/a,casual;religious,img54.jpg
-55,light_green_salwar_kameez,sikh,salwar_suit,garnment,2000.00,4.2,light_green;salwar_suit;casual;traditional,female,S;M;L;XL,light_green,sleeve,n/a,full_length,festival;cultural;functions,img55.png
+55,colorful_gown,all,gown,garnment,7000.00,4.7,colorful;gown;eligant;trendy;comfortable,female,S;M;L;XL,colorful,sleeveless,n/a,full_length,casual;party,img55.webp
+56,mermaid_gown,all,gown,garnment,9000.00,4.8,mermaid;gown;eligant;trendy;comfortable,female,S;M,blue;pink,sleeveless,n/a,full_length,casual;party,img56.webp
+57,maroon_frock,all,frock,garnment,3000.00,4.2,maroon;frock;eligant;trendy;comfortable,female,S;M,maroon,sleeveless,n/a,waist_length,casual;party,img57.jpg

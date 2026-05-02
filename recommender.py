@@ -25,7 +25,7 @@ class RecommendationEngine:
         else:
             self.df["family"] = self.df["family"].astype(str).str.lower().str.strip()
 
-    # -----------------------------
+  
     def split_multi(self, val):
         if pd.isna(val):
             return set()
@@ -36,7 +36,7 @@ class RecommendationEngine:
             return None
         return str(val).strip().lower().replace(" ", "_")
 
-    # -----------------------------
+  
     def recommend(self, user_profile=None):
 
         df = self.df.copy()
@@ -53,17 +53,14 @@ class RecommendationEngine:
 
         df["explanation"] = ""
 
-        # =====================================================
         # PRICE MATCH
-        # =====================================================
+     
         if min_price is not None and max_price is not None:
             df["price_match"] = df["price"].between(min_price, max_price)
         else:
             df["price_match"] = True
 
-        # =====================================================
-        # SPECIAL CASE: ONLY COMMUNITY
-        # =====================================================
+        # COMMUNITY-ONLY CASE
         if community and not category:
 
             df = df[df["comm_set"].apply(lambda x: community in x)].copy()
@@ -101,9 +98,8 @@ class RecommendationEngine:
             final["explanation"] = "community-only diversified rule applied"
             final["score"] = 0   # ✅ FIX ADDED
 
-        # =====================================================
+
         # GENERAL CASE
-        # =====================================================
         else:
 
             def score_row(r):
@@ -174,18 +170,15 @@ class RecommendationEngine:
 
             final = df.head(5)
 
-        # =====================================================
-        # FINAL SAFETY FIX (IMPORTANT)
-        # =====================================================
         if "score" not in final.columns:
             final["score"] = 0
 
         if "explanation" not in final.columns:
             final["explanation"] = ""
 
-        # =====================================================
-        # OUTPUT CLEANING
-        # =====================================================
+
+        # OUTPUT 
+
         cols = [
             "product_id",
             "name",

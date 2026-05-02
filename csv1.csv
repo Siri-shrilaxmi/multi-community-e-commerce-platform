@@ -12,8 +12,8 @@ product_id,name,community,category,family,price,rating,tags,gender,size,color,sl
 11,blue_tshirt,all,t-shirt,garnment,500.00,4.0,blue;t-shirt;casual;trendy;comfortable,female,S;M;L;XL,blue,sleeve,n/a,waist_length,casual,img11.jpg
 12,golden_necklace_set,hindu,necklace_set,accessory;jewelry,12000.00,4.9,golden;necklace_set;eligant;traditional,female,free_size,golden,n/a,n/a,n/a,festival;cultural;functions,img12.jpg
 13,gold_green_chand_bala_earrings,hindu;muslim,earrings,accessory;jewelry,3000.00,4.6,gold;green;chand_bala;earrings;eligant;traditional,female,free_size,gold;green,n/a,n/a,n/a,festival;cultural;functions,img13.avif
-14,cream_color_red_flower_printed_kurta,hindu;muslim,kurta,garnment,6200.00,3.8,cream_color;red_flower_printed;kurta;casual;cotton,female,S;M;L;XL,cream_color,sleeve,n/a,full_length,casual,img14.jpg
-15,pink_long_designer_stylish_kurta,hindu;muslim,kurta,garnment,10000.00,4.4,pink;long_designer_stylish;kurta;eligant,female,L;XL,pink,sleeve,n/a,full_length,casual;functions,img15.jpg
+14,cream_color_red_flower_printed_kurta,hindu;muslim;sikh,kurta;salwar_suit,garnment,garnment,6200.00,3.8,cream_color;red_flower_printed;kurta;casual;cotton,female,S;M;L;XL,cream_color,sleeve,n/a,full_length,casual,img14.jpg
+15,pink_long_designer_stylish_kurta,hindu;muslim;sikh,kurta;salwar_suit,garnment,10000.00,4.4,pink;long_designer_stylish;kurta;eligant,female,L;XL,pink,sleeve,n/a,full_length,casual;functions,img15.jpg
 16,golden_kurta_for_men,hindu,kurta_pajama,garnment,3000.00,1.2,white;kurta;eligant,male,L;XL;XXL,golden,sleeve,n/a,full_length,casual,img16.webp
 17,cream_chiffon_hijab,muslim,hijab,garnment,300.00,4.5,cream;chiffon;hijab;eligant;comfortable,female,free_size,cream,n/a,n/a,n/a,casual;religious,img17.jpg
 18,sky_blue_printed_hijab,muslim,hijab,garnment,900.00,2.4,sky_blue;printed;hijab;casual;comfortable,female,free_size,sky_blue,n/a,n/a,n/a,casual;religious,img18.jpg
@@ -26,7 +26,7 @@ product_id,name,community,category,family,price,rating,tags,gender,size,color,sl
 25,colorful_stylish_kaftan,muslim,kaftan,garnment,8000.00,4.6,colorful;stylish;kaftan,female,S;M;L;XL;XXL;XXXL,colorful,sleeve,n/a,full_length,casual;religious,img25.webp
 26,royal_style_kaftan,muslim,kaftan,garnment,15000.00,4.8,beautiful;design;kaftan;eligant;royal,female,S;M;L;XL,green,sleeve,n/a,full_length,casual;religious;function;ramdan,img26.webp
 27,white_red_salwar_kameez,hindu;muslim,salwar_suit,garnment,2000.00,4.0,white;red;salwar_suit;casual;cotton,female,S;M;L;XL,white;red,sleeve,n/a,full_length,casual,img27.jpg
-28,white_salwar_set,hindu;muslim,salwar_suit,garnment,1000.00,4.5,white;salwar_suit;eligant;cotton,female,S;M;L;XL,white,sleeve,n/a,full_length,casual,img28.jpg
+28,white_salwar_set,hindu;muslim;sikh,salwar_suit,garnment,1000.00,4.5,white;salwar_suit;eligant;cotton,female,S;M;L;XL,white,sleeve,n/a,full_length,casual,img28.jpg
 29,white_anarkali_set,hindu;muslim,anarkali_suit,garnment,3000.00,4.2,white;anarkali;eligant;cotton,female,S;M;L;XL,white,sleeve,n/a,full_length,casual,img29.jpg
 30,peach_anarkali_set,hindu;muslim,anarkali_suit,garnment,3500.00,4.3,peach;anarkali;eligant,female,L;XL,peach,sleeve,n/a,full_length,casual;religious,img30.jpg
 31,whilte_long_suit,hindu;muslim,salwar_suit;anarkali_suit,garnment,2500.00,4.1,white;long;beautiful,female,S;M,white,sleeve,n/a,full_length,casual;religious,img31.webp

@@ -31,7 +31,7 @@
 
         <p style="color:#555;">{{ item.explanation }}</p>
 
-        {% if item.family == "garnment" or item.sleeve != "n/a" %}
+        {% if item.family == "garnment" and item.sleeve != "n/a" %}
         <form method="POST" action="/" style="margin-top:10px;">
           <input type="hidden" name="product_id" value="{{ item.product_id }}">
           <input type="hidden" name="action" value="tryon">

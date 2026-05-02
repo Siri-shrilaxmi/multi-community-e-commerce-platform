@@ -9,11 +9,10 @@ import os
 # -----------------------------
 # DEFAULT PATHS (FOR LOCAL RUN)
 # -----------------------------
-person_path = r"C:\Users\shril\Documents\GitHub\Internship\multi-community-e-commerce-platform\person\p6.jpg"
+person_path = r"C:\Users\shril\Documents\GitHub\Internship\multi-community-e-commerce-platform\person\p8.jpg"
 csv_path = "csv1.csv"
 image_folder = r"C:\Users\shril\Documents\GitHub\Internship\multi-community-e-commerce-platform\try_on_img"
-product_id = 3
-
+product_id = 40
 
 # =============================
 # MAIN FUNCTION (ADDED)
@@ -62,7 +61,7 @@ def run_tryon_pipeline(person_path_input=None, product_id_input=None, output_pat
     # OFFSET TABLE
     # -----------------------------
     OFFSET_TABLE = {
-        ("sleeve", "full_length"): (-0.018, 0.00),
+        ("sleeve", "full_length"): (-0.01, -0.02),
         ("sleeveless", "full_length"): (0.001, 0.0),
         ("strapless", "full_length"): (0.00, -0.01),
 

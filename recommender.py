@@ -1,5 +1,6 @@
 import pandas as pd
 
+
 class RecommendationEngine:
 
     def __init__(self, csv_path):
@@ -16,125 +17,186 @@ class RecommendationEngine:
                     .str.replace(" ", "_")
                 )
 
+        self.df["price"] = pd.to_numeric(self.df["price"], errors="coerce").fillna(0)
+        self.df["rating"] = pd.to_numeric(self.df["rating"], errors="coerce").fillna(0)
+
+        if "family" not in self.df.columns:
+            self.df["family"] = "unknown"
+        else:
+            self.df["family"] = self.df["family"].astype(str).str.lower().str.strip()
+
     # -----------------------------
-    # MAIN FUNCTION (SMART RANKING)
+    def split_multi(self, val):
+        if pd.isna(val):
+            return set()
+        return set(str(val).lower().split(";"))
+
+    def norm(self, val):
+        if val is None or val == "":
+            return None
+        return str(val).strip().lower().replace(" ", "_")
+
     # -----------------------------
     def recommend(self, user_profile=None):
 
         df = self.df.copy()
 
-        # DEFAULT
         if user_profile is None:
-            user_profile = {
-                "community": None,
-                "category": None,
-                "price_range": (None, None)
-            }
+            user_profile = {}
 
-        def normalize(val):
-            if val is None or val == "":
-                return None
-            return val.strip().lower().replace(" ", "_")
-
-        community = normalize(user_profile.get("community"))
-        category = normalize(user_profile.get("category"))
+        community = self.norm(user_profile.get("community"))
+        category = self.norm(user_profile.get("category"))
         min_price, max_price = user_profile.get("price_range", (None, None))
 
-        print("\n--- USER INPUT ---")
-        print("Community:", community)
-        print("Category:", category)
-        print("Min:", min_price, "Max:", max_price)
+        df["comm_set"] = df["community"].apply(self.split_multi)
+        df["cat_set"] = df["category"].apply(self.split_multi)
 
-        # -----------------------------
-        # SCORE CALCULATION
-        # -----------------------------
-        df["score"] = 0
+        df["explanation"] = ""
 
-        # CATEGORY → highest priority
-        # -----------------------------
-        # CATEGORY → SMART PRIORITY
-        # -----------------------------
-        if category:
-
-            # EXACT match → highest
-            df.loc[df["category"] == category, "score"] += 5
-
-            # PARTIAL match → lower
-            df.loc[
-                (df["category"].str.contains(category, na=False)) &
-                (df["category"] != category),
-                "score"
-            ] += 2
-
-
-        # COMMUNITY → medium priority
-        if community:
-            df.loc[df["community"] == community, "score"] += 2
-        elif not category:
-            # only if NOTHING selected → allow "all"
-            df.loc[df["community"] == "all", "score"] += 1
-
-        # PRICE → lowest priority
+        # =====================================================
+        # PRICE MATCH
+        # =====================================================
         if min_price is not None and max_price is not None:
-            df.loc[
-                (df["price"] >= min_price) &
-                (df["price"] <= max_price),
-                "score"
-            ] += 1
+            df["price_match"] = df["price"].between(min_price, max_price)
+        else:
+            df["price_match"] = True
 
-        # -----------------------------
-        # FILTER OUT ZERO SCORE (OPTIONAL)
-        # -----------------------------
-        filtered = df[df["score"] > 0]
+        # =====================================================
+        # SPECIAL CASE: ONLY COMMUNITY
+        # =====================================================
+        if community and not category:
 
-        # -----------------------------
-        # FALLBACK LOGIC
-        # -----------------------------
-        if filtered.empty:
-            print("⚠️ No strong match → fallback to ALL")
+            df = df[df["comm_set"].apply(lambda x: community in x)].copy()
 
-            filtered = self.df[self.df["community"] == "all"].copy()
+            garments = df[df["family"] == "garment"]
+            accessories = df[df["family"].isin(["accessory", "jewelry"])]
 
-            # if still empty (rare)
-            if filtered.empty:
-                print("⚠️ No ALL → random items")
-                filtered = self.df.sample(min(10, len(self.df)))
+            result = []
+            seen_ids = set()
 
-        # -----------------------------
-        # SORT BY SCORE + RATING
-        # -----------------------------
-        filtered = filtered.sort_values(
-            by=["score", "rating"],
-            ascending=[False, False]
-        )
+            def add_items(data, limit):
+                count = 0
+                for _, r in data.sort_values(by="rating", ascending=False).iterrows():
+                    if r["product_id"] not in seen_ids:
+                        result.append(r)
+                        seen_ids.add(r["product_id"])
+                        count += 1
+                    if count == limit:
+                        break
 
-        print("✅ Results:", len(filtered))
+            add_items(garments, 3)
+            add_items(accessories, 2)
 
-        return filtered.head(5)
+            if len(result) < 5:
+                fallback = df.sort_values(by="rating", ascending=False)
+                for _, r in fallback.iterrows():
+                    if r["product_id"] not in seen_ids:
+                        result.append(r)
+                        seen_ids.add(r["product_id"])
+                    if len(result) == 5:
+                        break
 
+            final = pd.DataFrame(result)
 
-# -----------------------------
-# TERMINAL TEST
-# -----------------------------
-if __name__ == "__main__":
+            final["explanation"] = "community-only diversified rule applied"
+            final["score"] = 0   # ✅ FIX ADDED
 
-    engine = RecommendationEngine("csv1.csv")
+        # =====================================================
+        # GENERAL CASE
+        # =====================================================
+        else:
 
-    test_profile = {
-        "community": "hindu",
-        "category": "salwar suit",
-        "price_range": (2000, 5000)
-    }
+            def score_row(r):
+                score = 0
+                reasons = []
 
-    results = engine.recommend(test_profile)
+                comm = community and (community in r["comm_set"])
+                cat = category and (category in r["cat_set"])
+                price = r["price_match"]
 
-    print("\n=== FINAL RESULTS ===")
-    print(results[[
-        "product_id",
-        "name",
-        "category",
-        "community",
-        "price",
-        "rating",
-        "score"
-    ]])
+                if community and category:
+
+                    if comm and cat and price:
+                        score += 100
+                        reasons.append("community + category + price match")
+
+                    elif comm and cat:
+                        score += 85
+                        reasons.append("community + category match")
+
+                    elif comm:
+                        score += 70
+                        reasons.append("community match")
+
+                    elif cat:
+                        score += 60
+                        reasons.append("category match")
+
+                    elif price:
+                        score += 40
+                        reasons.append("price match")
+
+                elif community:
+
+                    if comm:
+                        score += 100
+                        reasons.append("community match")
+
+                elif category:
+
+                    if cat:
+                        score += 100
+                        reasons.append("category match")
+
+                else:
+                    score += 10
+                    reasons.append("fallback general")
+
+                return pd.Series([score, " | ".join(reasons)])
+
+            df[["score", "explanation"]] = df.apply(score_row, axis=1)
+
+            df = df[df["score"] > 0].copy()
+
+            df = df.sort_values(by=["score", "rating"], ascending=[False, False])
+
+            if not df.empty:
+                top_family = df.iloc[0]["family"]
+
+                df["family_boost"] = df["family"].apply(
+                    lambda x: 1 if x == top_family else 0
+                )
+
+                df = df.sort_values(
+                    by=["score", "family_boost", "rating"],
+                    ascending=[False, False, False]
+                )
+
+            final = df.head(5)
+
+        # =====================================================
+        # FINAL SAFETY FIX (IMPORTANT)
+        # =====================================================
+        if "score" not in final.columns:
+            final["score"] = 0
+
+        if "explanation" not in final.columns:
+            final["explanation"] = ""
+
+        # =====================================================
+        # OUTPUT CLEANING
+        # =====================================================
+        cols = [
+            "product_id",
+            "name",
+            "category",
+            "community",
+            "family",
+            "price",
+            "rating",
+            "image_path",
+            "score",
+            "explanation"
+        ]
+
+        return final[cols]

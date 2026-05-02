@@ -2,4 +2,5 @@ venv311/
 u2net.onnx
 .vscode/
 path
+__pycache__/
 

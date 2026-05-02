@@ -3,4 +3,8 @@ u2net.onnx
 .vscode/
 path
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
+
 

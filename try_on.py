@@ -6,9 +6,9 @@ from PIL import Image
 import pandas as pd
 import os
 
-person_path = r"C:\Users\shril\Documents\GitHub\Internship\multi-community-e-commerce-platform\person\p1.jpg"
+person_path = "path to person image"
 csv_path = "csv1.csv"
-image_folder = r"C:\Users\shril\Documents\GitHub\Internship\multi-community-e-commerce-platform\try_on_img"
+image_folder =" path to garnment image"
 product_id = 2
 
 # MAIN FUNCTION

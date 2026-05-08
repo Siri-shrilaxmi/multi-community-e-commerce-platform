@@ -1,3 +1,7 @@
+<!-- ========================= -->
+<!-- 🔥 RECOMMENDATIONS -->
+<!-- ========================= -->
+
 <h2 style="text-align:center; margin-top:30px;">Recommended Products</h2>
 
 {% if results %}
@@ -58,6 +62,41 @@
 
 
 <!-- ========================= -->
+<!-- 🔥 IMAGE CLASSIFICATION RESULT (NEW) -->
+<!-- ========================= -->
+
+{% if classification_results %}
+
+<hr style="margin:50px 0;">
+
+<h2 style="text-align:center;">🧠 Image Classification Result</h2>
+
+<div style="text-align:center; margin-top:20px;">
+  <img src="/uploads/{{ uploaded_image }}" width="220" style="border-radius:10px;">
+</div>
+
+<div style="
+    max-width:400px;
+    margin:20px auto;
+    padding:15px;
+    background:#f9f9f9;
+    border-radius:10px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.1);
+">
+
+  {% for r in classification_results %}
+    <p style="font-size:18px; margin:10px 0;">
+      <b>Category:</b> {{ r.category }} <br>
+      <b>Confidence:</b> {{ r.confidence | round(2) }}%
+    </p>
+  {% endfor %}
+
+</div>
+
+{% endif %}
+
+
+<!-- ========================= -->
 <!-- 🔥 TRY-ON SECTION -->
 <!-- ========================= -->
 
@@ -112,7 +151,7 @@
 
     <br>
 
-    <!-- RESULT -->
+    <!-- RESULT IMAGE -->
     {% if result_image %}
       <h3 style="text-align:center;">Result</h3>
       <img src="/result_image/{{ result_image }}" width="100%" style="border-radius:10px;">

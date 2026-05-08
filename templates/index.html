@@ -52,3 +52,39 @@
   </button>
 
 </form>
+
+
+<!-- ========================= -->
+<!-- 🔥 NEW: IMAGE CLASSIFIER -->
+<!-- ========================= -->
+
+<h2 style="text-align:center; margin-top:50px;">Image Category Classifier</h2>
+
+<form method="POST" action="/classify" enctype="multipart/form-data" style="
+    max-width:450px;
+    margin:30px auto;
+    padding:25px;
+    border:1px solid #ccc;
+    border-radius:10px;
+    background:#f9f9f9;
+    box-shadow:0 2px 8px rgba(0,0,0,0.1);
+">
+
+  <label style="font-weight:bold;">Upload Product Image</label><br><br>
+
+  <input type="file" name="image" required style="width:100%;"><br><br>
+
+  <button type="submit" style="
+      width:100%;
+      padding:10px;
+      background:#6f42c1;
+      color:white;
+      border:none;
+      border-radius:5px;
+      cursor:pointer;
+      font-size:16px;
+  ">
+    Classify Category
+  </button>
+
+</form>

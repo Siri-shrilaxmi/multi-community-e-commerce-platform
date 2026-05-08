@@ -6,6 +6,9 @@ from recommender import RecommendationEngine
 from try_on import run_tryon_pipeline
 from size_estimation import BodyMeasurementSystem
 
+# 🔥 IMPORT YOUR CLASSIFIER FUNCTION
+from classifier import predict
+
 app = Flask(__name__)
 
 # -----------------------------
@@ -75,7 +78,6 @@ def home():
             "price_range": (min_price, max_price)
         }
 
-        # 🔥 DEBUG (remove later)
         print("USER PROFILE:", user_profile)
 
         results = engine.recommend(user_profile).to_dict("records")
@@ -88,6 +90,29 @@ def home():
 
     return render_template("index.html")
 
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory("uploads", filename)
+
+@app.route("/classify", methods=["POST"])
+def classify():
+
+    file = request.files["image"]
+
+    os.makedirs("uploads", exist_ok=True)
+
+    image_path = os.path.join("uploads", file.filename)
+    file.save(image_path)
+
+    results = predict(image_path, top_k=1)
+
+    return render_template(
+        "results.html",
+        classification_results=results,
+        uploaded_image=file.filename,
+        results=None,
+        show_tryon=False
+    )
 
 # -----------------------------
 # RUN TRY-ON PIPELINE
@@ -98,16 +123,13 @@ def run_tryon():
     product_id = int(request.form["product_id"])
     file = request.files["person_image"]
 
-    # save uploaded image
     os.makedirs("uploads", exist_ok=True)
     person_path = os.path.join("uploads", file.filename)
     file.save(person_path)
 
-    # get product
     row = df[df["product_id"] == product_id].iloc[0]
     selected_product = row.to_dict()
 
-    # run pipeline
     output_path = "final_result.png"
 
     run_tryon_pipeline(
@@ -139,16 +161,10 @@ def get_size():
     row = df[df["product_id"] == product_id].iloc[0]
     selected_product = row.to_dict()
 
-    # -----------------------------
-    # RULE 1: FREE SIZE
-    # -----------------------------
     if str(row["size"]).strip().lower() == "free_size":
         size_result = "Free Size"
 
     else:
-        # -----------------------------
-        # RULE 2: ML MODEL
-        # -----------------------------
         gender = row["gender"]
 
         system = BodyMeasurementSystem()

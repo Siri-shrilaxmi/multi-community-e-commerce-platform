@@ -8,14 +8,13 @@ import json
 # =========================
 # CONFIG
 # =========================
-image_path = r"classifier_img\c7.jpg"
 embedding_csv = "category_embeddings.csv"
 model_name = "patrickjohncyh/fashion-clip"
-TOP_K = 1
 device = "cpu"
 
+
 # =========================
-# LOAD MODEL
+# LOAD MODEL (once)
 # =========================
 print("\n🔄 Loading CLIP...")
 
@@ -24,8 +23,9 @@ model.eval()
 
 processor = CLIPProcessor.from_pretrained(model_name)
 
+
 # =========================
-# LOAD EMBEDDINGS
+# LOAD EMBEDDINGS (once)
 # =========================
 df = pd.read_csv(embedding_csv)
 
@@ -40,35 +40,55 @@ category_embeddings = F.normalize(category_embeddings, dim=-1)
 
 print("Loaded categories:", len(categories))
 
-# =========================
-# IMAGE EMBEDDING (OLD WORKING STYLE)
-# =========================
-image = Image.open(image_path).convert("RGB")
-
-inputs = processor(images=image, return_tensors="pt")
-inputs = {k: v.to(device) for k, v in inputs.items()}
-
-with torch.no_grad():
-
-    img_out = model.vision_model(
-        pixel_values=inputs["pixel_values"]
-    )
-
-    image_emb = model.visual_projection(img_out.pooler_output)
-
-    image_emb = F.normalize(image_emb, dim=-1)
 
 # =========================
-# SIMILARITY
+# CORE FUNCTION (IMPORTANT)
 # =========================
-similarity = image_emb @ category_embeddings.T
+def predict(image_path, top_k=1):
 
-scores, indices = torch.topk(similarity[0], TOP_K)
+    image = Image.open(image_path).convert("RGB")
 
-print("\nTOP MATCHES:\n")
+    inputs = processor(images=image, return_tensors="pt")
+    inputs = {k: v.to(device) for k, v in inputs.items()}
 
-for rank, (score, idx) in enumerate(zip(scores, indices), 1):
-    idx = idx.item()
-    print(f"{rank}. {categories[idx]} ({float(score)*100:.2f}%)")
+    with torch.no_grad():
 
-print("\nBEST:", categories[indices[0].item()])
+        img_out = model.vision_model(
+            pixel_values=inputs["pixel_values"]
+        )
+
+        image_emb = model.visual_projection(img_out.pooler_output)
+
+        image_emb = F.normalize(image_emb, dim=-1)
+
+    similarity = image_emb @ category_embeddings.T
+
+    scores, indices = torch.topk(similarity[0], top_k)
+
+    results = []
+
+    for score, idx in zip(scores, indices):
+        idx = idx.item()
+        results.append({
+            "category": categories[idx],
+            "confidence": float(score) * 100
+        })
+
+    return results
+
+
+# =========================
+# CLI MODE (terminal run)
+# =========================
+if __name__ == "__main__":
+
+    image_path = r"classifier_img\c7.jpg"
+
+    results = predict(image_path, top_k=1)
+
+    print("\n🔥 TERMINAL CLASSIFICATION RESULT\n")
+
+    for r in results:
+        print(f"{r['category']} -> {r['confidence']:.2f}%")
+
+    print("\nBEST MATCH:", results[0]["category"])

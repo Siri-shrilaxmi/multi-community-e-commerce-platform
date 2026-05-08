@@ -6,26 +6,43 @@ from PIL import Image
 import pandas as pd
 import os
 
-person_path = "path to person image"
-csv_path = "csv1.csv"
-image_folder =" path to garnment image"
-product_id = 2
+import sys
+print("PYTHON:", sys.executable)
+print("MP FILE:", mp.__file__)
+print("HAS SOLUTIONS:", hasattr(mp, "solutions"))
 
+person_path = r"person\p1.jpg"
+csv_path = r"csv1.csv"
+image_folder = r"try_on_img"
+product_id = 1
+
+
+# =========================================================
 # MAIN FUNCTION
+# =========================================================
 
-def run_tryon_pipeline(person_path_input=None, product_id_input=None, output_path_input="final_result.png"):
+def run_tryon_pipeline(
+    person_path_input=None,
+    product_id_input=None,
+    output_path_input="final_result.png"
+):
 
     global person_path, product_id
 
-    # OVERRIDE (FOR FLASK)
+    # =====================================================
+    # FLASK OVERRIDE
+    # =====================================================
+
     if person_path_input is not None:
         person_path = person_path_input
 
     if product_id_input is not None:
         product_id = product_id_input
 
-
+    # =====================================================
     # LOAD CSV
+    # =====================================================
+
     df = pd.read_csv(csv_path)
 
     row = df[df["product_id"] == product_id]
@@ -38,11 +55,12 @@ def run_tryon_pipeline(person_path_input=None, product_id_input=None, output_pat
     garment_name = str(row["image_path"]).strip()
     garment_path = os.path.join(image_folder, garment_name)
 
+    # =====================================================
+    # METADATA
+    # =====================================================
 
-    # CONDITIONS
-  
-    sleeve = str(row["sleeve"]).lower()
-    length_type = str(row["length"]).lower()
+    sleeve = str(row["sleeve"]).lower().strip()
+    length_type = str(row["length"]).lower().strip()
 
     is_top = sleeve != "n/a"
     is_full_length = length_type == "full_length"
@@ -50,39 +68,34 @@ def run_tryon_pipeline(person_path_input=None, product_id_input=None, output_pat
     print("Type:", "TOP" if is_top else "BOTTOM")
     print("Length:", length_type)
 
-   
-    # OFFSET TABLE
-
-    OFFSET_TABLE = {
-        ("sleeve", "full_length"): (-0.01, -0.02),
-        ("sleeveless", "full_length"): (0.001, 0.0),
-        ("strapless", "full_length"): (0.00, -0.01),
-
-        ("sleeve", "waist_length"): (0.00, -0.02),
-        ("sleeveless", "waist_length"): (0.00, -0.02),
-        ("strapless", "waist_length"): (0.00, -0.00),
-
-        ("sleeve", "cropped"): (0.00, -0.03),
-        ("sleeveless", "cropped"): (-0.02, -0.03),
-        ("strapless", "cropped"): (0.00, 0.00),
-    }
-
-    x_shift_mul, y_shift_mul = OFFSET_TABLE.get((sleeve, length_type), (0.0, 0.0))
-
-  
+    # =====================================================
     # LOAD IMAGES
+    # =====================================================
 
-    person_rgba = np.array(remove(Image.open(person_path).convert("RGBA")))
-    garment_rgba = np.array(remove(Image.open(garment_path).convert("RGBA")))
+    person_rgba = np.array(
+        remove(
+            Image.open(person_path).convert("RGBA")
+        )
+    )
+
+    garment_rgba = np.array(
+        remove(
+            Image.open(garment_path).convert("RGBA")
+        )
+    )
 
     person_rgb = person_rgba[:, :, :3]
+
     h, w = person_rgb.shape[:2]
 
-   
+    # =====================================================
     # POSE DETECTION
-  
+    # =====================================================
+
     mp_pose = mp.solutions.pose
+
     with mp_pose.Pose(static_image_mode=True) as pose:
+
         res = pose.process(person_rgb)
 
     if not res.pose_landmarks:
@@ -90,148 +103,228 @@ def run_tryon_pipeline(person_path_input=None, product_id_input=None, output_pat
 
     lm = res.pose_landmarks.landmark
 
-    left_sh = (int(lm[12].x * w), int(lm[12].y * h))
-    right_sh = (int(lm[11].x * w), int(lm[11].y * h))
+    # =====================================================
+    # BODY LANDMARKS
+    # =====================================================
 
-    left_hip = (int(lm[23].x * w), int(lm[23].y * h))
-    right_hip = (int(lm[24].x * w), int(lm[24].y * h))
+    left_sh = (
+        int(lm[12].x * w),
+        int(lm[12].y * h)
+    )
 
-    body_center = (
+    right_sh = (
+        int(lm[11].x * w),
+        int(lm[11].y * h)
+    )
+
+    left_hip = (
+        int(lm[23].x * w),
+        int(lm[23].y * h)
+    )
+
+    right_hip = (
+        int(lm[24].x * w),
+        int(lm[24].y * h)
+    )
+
+    shoulder_center = (
         (left_sh[0] + right_sh[0]) // 2,
         (left_sh[1] + right_sh[1]) // 2
     )
 
+    hip_center = (
+        (left_hip[0] + right_hip[0]) // 2,
+        (left_hip[1] + right_hip[1]) // 2
+    )
 
+    body_width = np.linalg.norm(
+        np.array(left_sh) - np.array(right_sh)
+    )
+
+    # =====================================================
     # GARMENT DETECTION
- 
+    # =====================================================
+
     alpha = garment_rgba[:, :, 3]
 
     rows = np.where(np.any(alpha > 0, axis=1))[0]
+
     if len(rows) == 0:
         raise Exception("❌ No garment detected")
 
     top = rows[0]
     bottom = rows[-1]
 
-    g_y = top + int(0.05 * (bottom - top))
-    cols = np.where(alpha[g_y] > 0)[0]
+    # =====================================================
+    # STRUCTURED SHOULDER SAMPLING
+    # =====================================================
 
+    garment_height = bottom - top
+
+    # move slightly below top
+    shoulder_scan_y = top + int(0.05 * garment_height)
+
+    cols = np.where(alpha[shoulder_scan_y] > 0)[0]
+
+    if len(cols) == 0:
+        raise Exception("❌ Unable to detect garment width")
+
+    # stable shoulder anchors
     g_left = int(np.percentile(cols, 10))
     g_right = int(np.percentile(cols, 90))
 
     garment_width = g_right - g_left
-    body_width = np.linalg.norm(np.array(left_sh) - np.array(right_sh))
+
+    # =====================================================
+    # SCALE GARMENT USING BODY WIDTH
+    # =====================================================
 
     scale_x = body_width / garment_width
 
     new_w = int(garment_rgba.shape[1] * scale_x)
     new_h = int(garment_rgba.shape[0] * scale_x)
 
-    garment_scaled = cv2.resize(garment_rgba, (new_w, new_h), interpolation=cv2.INTER_AREA)
+    garment_scaled = cv2.resize(
+        garment_rgba,
+        (new_w, new_h),
+        interpolation=cv2.INTER_AREA
+    )
 
-
-    # UPDATE POINTS
+    # =====================================================
+    # UPDATE GARMENT POINTS AFTER SCALE
+    # =====================================================
 
     g_left = int(g_left * scale_x)
     g_right = int(g_right * scale_x)
-    g_y = int(g_y * scale_x)
 
-  
-    # BASE POSITION
+    # IMPORTANT:
+    # this is the sampled shoulder line
+    # NOT resizing logic
+    shoulder_scan_y = int(shoulder_scan_y * scale_x)
 
-    if is_top:
-        g_center = (g_left + g_right) // 2
-        x = body_center[0] - g_center
-        y = body_center[1] - g_y
-    else:
-        x = w // 2 - new_w // 2
-        y = h // 2 - new_h // 2
+    garment_center_x = (g_left + g_right) // 2
 
+    # =====================================================
+    # POSITIONING
+    # =====================================================
 
-    # FULL LENGTH
+    # align sampled shoulder line to body shoulders
+    x = shoulder_center[0] - garment_center_x
+    y = shoulder_center[1] - shoulder_scan_y
+
+    # =====================================================
+    # LENGTH HANDLING
+    # =====================================================
 
     if is_full_length:
 
-        p_rows = np.where(np.any(person_rgba[:, :, 3] > 0, axis=1))[0]
+        # extend till person bottom
+
+        p_rows = np.where(
+            np.any(person_rgba[:, :, 3] > 0, axis=1)
+        )[0]
+
         p_bottom = p_rows[-1]
 
-        g_rows = np.where(np.any(garment_scaled[:, :, 3] > 0, axis=1))[0]
+        g_rows = np.where(
+            np.any(garment_scaled[:, :, 3] > 0, axis=1)
+        )[0]
+
         g_bottom = g_rows[-1]
 
-        current_height = g_bottom - g_y
+        current_height = g_bottom - shoulder_scan_y
+
         target_height = (p_bottom + 5) - y
 
-        scale_y = np.clip(target_height / current_height, 0.8, 1.8)
+        scale_y = target_height / current_height
+
+        scale_y = np.clip(scale_y, 0.8, 1.8)
 
         garment_scaled = cv2.resize(
             garment_scaled,
-            (new_w, int(garment_scaled.shape[0] * scale_y)),
+            (
+                new_w,
+                int(garment_scaled.shape[0] * scale_y)
+            ),
             interpolation=cv2.INTER_AREA
         )
-
-  
-    # WAIST LENGTH
 
     elif is_top and length_type == "waist_length":
 
-        waist_y = (left_hip[1] + right_hip[1]) // 2
+        waist_y = hip_center[1]
 
-        g_rows = np.where(np.any(garment_scaled[:, :, 3] > 0, axis=1))[0]
+        g_rows = np.where(
+            np.any(garment_scaled[:, :, 3] > 0, axis=1)
+        )[0]
+
         g_bottom = g_rows[-1]
 
-        current_height = g_bottom - g_y
+        current_height = g_bottom - shoulder_scan_y
 
-        scale_y = (waist_y - (body_center[1] - g_y)) / current_height if current_height > 0 else 1.0
-        scale_y = np.clip(scale_y, 0.6, 1.5)
+        target_height = waist_y - y
+
+        scale_y = target_height / current_height
+
+        scale_y = np.clip(scale_y, 0.7, 1.4)
 
         garment_scaled = cv2.resize(
             garment_scaled,
-            (new_w, int(garment_scaled.shape[0] * scale_y)),
+            (
+                new_w,
+                int(garment_scaled.shape[0] * scale_y)
+            ),
             interpolation=cv2.INTER_AREA
         )
 
-  
-    # CROPPED
-   
     elif is_top and length_type == "cropped":
 
-        shoulder_y = body_center[1]
-        waist_y = (left_hip[1] + right_hip[1]) // 2
+        cropped_y = int(
+            0.4 * shoulder_center[1] +
+            0.6 * hip_center[1]
+        )
 
-        target_y = int(0.4 * shoulder_y + 0.6 * waist_y)
+        g_rows = np.where(
+            np.any(garment_scaled[:, :, 3] > 0, axis=1)
+        )[0]
 
-        g_rows = np.where(np.any(garment_scaled[:, :, 3] > 0, axis=1))[0]
         g_bottom = g_rows[-1]
 
-        garment_bottom_y = y + g_bottom
+        current_bottom = y + g_bottom
 
-        if garment_bottom_y > target_y:
-            trim = garment_bottom_y - target_y
+        if current_bottom > cropped_y:
+
+            trim = current_bottom - cropped_y
+
             garment_scaled = garment_scaled[:-trim, :, :]
 
 
-    # OFFSET
- 
-    x += int(x_shift_mul * w)
-    y += int(y_shift_mul * h)
+    # =====================================================
+    # OVERLAY FUNCTION
+    # =====================================================
 
-   
-    # OVERLAY
-   
     def overlay(bg, fg, x, y):
+
         bh, bw = bg.shape[:2]
         fh, fw = fg.shape[:2]
 
         x1 = max(x, 0)
         y1 = max(y, 0)
+
         x2 = min(x + fw, bw)
         y2 = min(y + fh, bh)
 
         fg_x1 = max(0, -x)
         fg_y1 = max(0, -y)
 
-        fg_crop = fg[fg_y1:fg_y1+(y2-y1), fg_x1:fg_x1+(x2-x1)]
-        bg_crop = bg[y1:y2, x1:x2]
+        fg_crop = fg[
+            fg_y1:fg_y1 + (y2 - y1),
+            fg_x1:fg_x1 + (x2 - x1)
+        ]
+
+        bg_crop = bg[
+            y1:y2,
+            x1:x2
+        ]
 
         alpha = fg_crop[:, :, 3:4] / 255.0
 
@@ -244,17 +337,35 @@ def run_tryon_pipeline(person_path_input=None, product_id_input=None, output_pat
 
         return bg
 
-   
-    # APPLY
-   
-    result = overlay(person_rgba.copy(), garment_scaled, x, y)
+    # =====================================================
+    # APPLY OVERLAY
+    # =====================================================
 
-    cv2.imwrite(output_path_input, cv2.cvtColor(result, cv2.COLOR_RGBA2BGR))
+    result = overlay(
+        person_rgba.copy(),
+        garment_scaled,
+        x,
+        y
+    )
 
-    print("✅ DONE — try-on completed")
+    # =====================================================
+    # SAVE OUTPUT
+    # =====================================================
+
+    cv2.imwrite(
+        output_path_input,
+        cv2.cvtColor(result, cv2.COLOR_RGBA2BGR)
+    )
+
+    print("✅ DONE — structured try-on completed")
 
     return output_path_input
 
-# Local Run
+
+# =========================================================
+# LOCAL RUN
+# =========================================================
+
 if __name__ == "__main__":
+
     run_tryon_pipeline()

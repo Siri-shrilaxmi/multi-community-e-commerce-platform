@@ -19,6 +19,7 @@ Scoring system:
 Priority-based matching (community > category > price)
 Family diversification (garments and accessories)
 Output: Top ranked products with explanations
+
 *** 2.Virtual Try-On System ***
 Uses MediaPipe pose estimation for body landmarks
 rembg used for background removal
@@ -36,6 +37,7 @@ Supports:
 tops
 waist-length garments
 full-length garments with adaptive scaling
+
 *** 3. Body Measurement & Size Estimation***
 Uses MediaPipe pose landmarks
 Extracts:
@@ -46,6 +48,7 @@ Converts pixel → cm using reference height input
 Maps measurements to predefined size charts:
 Male sizes (S → XXXL)
 Female sizes (S → XXL)
+
 *** 4.Image Classification (CLIP-based) ***
 Uses pretrained CLIP model (fashion-clip)
 Precomputed category embeddings stored in CSV
@@ -86,11 +89,14 @@ OpenCV
 rembg (background removal)
 PyTorch
 CLIP (Fashion-CLIP)
+
 **Data Processing**
 Pandas
 NumPy
+
 **Backend**
 Flask (Python web framework)
+
 **Image Processing**
 PIL (Pillow)
 OpenCV resizing & blending
@@ -115,10 +121,13 @@ shoulder center alignment for horizontal positioning
 body-width-based scaling for proportional fitting
 hip-based adjustments for length control
 This made the system more stable and visually consistent across different garments.
-To improve stability, I introduced a small downward offset (~0.05 of garment height) before final placement. This adjustment helps compensate for:
-minor inaccuracies in neck vs shoulder detection
-variations in pose estimation across images
-This made the overlay smoother and more visually consistent.
+
+To improve stability, I introduced a small downward offset (~0.05 of garment height) before final placement. 
+This adjustment helps compensate for:
+* minor inaccuracies in neck vs shoulder detection
+* variations in pose estimation across images
+* This made the overlay smoother and more visually consistent.
+
 Scaling is handled using body-width proportional mapping to maintain fit consistency across different body types.
 
 **2. What were the biggest challenges you faced?**

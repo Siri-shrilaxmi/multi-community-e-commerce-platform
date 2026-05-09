@@ -1,38 +1,32 @@
+# embeddinf preprocessing pipline
+
 import pandas as pd
 import torch
 import torch.nn.functional as F
 from transformers import CLIPProcessor, CLIPModel
 import json
 
-# =========================
-# CONFIG
-# =========================
+# path 
 csv_path = "csv1.csv"
 output_csv = "category_embeddings.csv"
 model_name = "patrickjohncyh/fashion-clip"
 device = "cpu"
 
-# =========================
-# LOAD MODEL
-# =========================
-print("\n🔄 Loading CLIP...")
+# load model
+print("\n Loading CLIP...")
 
 model = CLIPModel.from_pretrained(model_name).to(device)
 model.eval()
 
 processor = CLIPProcessor.from_pretrained(model_name)
 
-# =========================
-# LOAD CSV
-# =========================
+# load csv
 df = pd.read_csv(csv_path)
 
 if "category" not in df.columns:
-    raise Exception("❌ category column missing")
+    raise Exception(" category column missing")
 
-# =========================
-# EXTRACT CATEGORIES
-# =========================
+# extract categories
 categories = sorted({
     c.strip().lower()
     for item in df["category"].dropna().astype(str)
@@ -42,9 +36,7 @@ categories = sorted({
 
 print("\nCATEGORIES:", categories)
 
-# =========================
-# TEXT EMBEDDINGS (OLD WORKING STYLE)
-# =========================
+
 inputs = processor(
     text=categories,
     return_tensors="pt",
@@ -65,9 +57,6 @@ with torch.no_grad():
 
     text_emb = F.normalize(text_emb, dim=-1)
 
-# =========================
-# SAVE
-# =========================
 rows = [
     {
         "category": c,
@@ -78,4 +67,4 @@ rows = [
 
 pd.DataFrame(rows).to_csv(output_csv, index=False)
 
-print("\n✅ Saved:", output_csv)
+print("\n Saved:", output_csv)

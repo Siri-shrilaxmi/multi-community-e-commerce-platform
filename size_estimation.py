@@ -17,8 +17,8 @@ class BodyMeasurementSystem:
         
         lm = results.pose_landmarks.landmark
 
-        # DIMENSION CALCULATION (Using Reference Height)
-        #(from nose to ankle)
+        # DIMENSION CALCULATION 
+        # heightfrom nose to ankle
         pixel_height = abs(lm[self.mp_pose.PoseLandmark.NOSE].y - 
                            lm[self.mp_pose.PoseLandmark.LEFT_ANKLE].y) * h
         cm_per_px = height_cm / pixel_height
@@ -33,13 +33,13 @@ class BodyMeasurementSystem:
         torso_cm = get_dist(11, 23) 
         hip_cm = get_dist(23, 24)
 
-        # CONVERSION FOR CHART COMPARISON
+        # conversion for chart comparision
         shoulder_in = shoulder_cm / 2.54
-        # We estimate Chest/Waist using the width and a standard depth multiplier
+
         est_chest_in = (shoulder_cm * 2.1) / 2.54 
         est_waist_in = (hip_cm * 2.1) / 2.54
 
-        # CHART COMPARISON LOGIC
+        # comparision logic
         recommended = "S"
         
         if gender.lower() == 'male':
@@ -71,7 +71,7 @@ class BodyMeasurementSystem:
                     break
             else: recommended = "XXL"
 
-        # FINAL OUTPUT
+        # final output
         return {
             "shoulder_width": f"{round(shoulder_cm, 1)} cm",
             "torso_length":   f"{round(torso_cm, 1)} cm",
@@ -82,5 +82,5 @@ class BodyMeasurementSystem:
 # local run
 if __name__ == "__main__":
     system = BodyMeasurementSystem()
-    res = system.get_measurements_and_size(r"C:\Users\shril\Documents\GitHub\Internship\multi-community-e-commerce-platform\person\p11.webp", 152, "female")
+    res = system.get_measurements_and_size(r"person\p11.webp", 152, "female")
     print(res)

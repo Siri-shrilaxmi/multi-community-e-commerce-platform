@@ -6,7 +6,7 @@ class RecommendationEngine:
     def __init__(self, csv_path):
         self.df = pd.read_csv(csv_path)
 
-        # CLEAN DATA
+        # clean data
         for col in self.df.columns:
             if self.df[col].dtype == "object":
                 self.df[col] = (
@@ -53,14 +53,14 @@ class RecommendationEngine:
 
         df["explanation"] = ""
 
-        # PRICE MATCH
+        # price match
      
         if min_price is not None and max_price is not None:
             df["price_match"] = df["price"].between(min_price, max_price)
         else:
             df["price_match"] = True
 
-        # COMMUNITY-ONLY CASE
+        # community-only case
         if community and not category:
 
             df = df[df["comm_set"].apply(lambda x: community in x)].copy()
@@ -96,10 +96,10 @@ class RecommendationEngine:
             final = pd.DataFrame(result)
 
             final["explanation"] = "community-only diversified rule applied"
-            final["score"] = 0   # ✅ FIX ADDED
+            final["score"] = 0   
 
 
-        # GENERAL CASE
+        # general case
         else:
 
             def score_row(r):
@@ -177,7 +177,7 @@ class RecommendationEngine:
             final["explanation"] = ""
 
 
-        # OUTPUT 
+        # outpu
 
         cols = [
             "product_id",

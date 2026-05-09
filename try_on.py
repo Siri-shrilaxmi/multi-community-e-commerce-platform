@@ -6,10 +6,6 @@ from PIL import Image
 import pandas as pd
 import os
 
-import sys
-print("PYTHON:", sys.executable)
-print("MP FILE:", mp.__file__)
-print("HAS SOLUTIONS:", hasattr(mp, "solutions"))
 
 person_path = r"person\p1.jpg"
 csv_path = r"csv1.csv"
@@ -17,10 +13,8 @@ image_folder = r"try_on_img"
 product_id = 1
 
 
-# =========================================================
-# MAIN FUNCTION
-# =========================================================
 
+# main function
 def run_tryon_pipeline(
     person_path_input=None,
     product_id_input=None,
@@ -29,9 +23,7 @@ def run_tryon_pipeline(
 
     global person_path, product_id
 
-    # =====================================================
-    # FLASK OVERRIDE
-    # =====================================================
+    # Override for web input
 
     if person_path_input is not None:
         person_path = person_path_input
@@ -39,25 +31,19 @@ def run_tryon_pipeline(
     if product_id_input is not None:
         product_id = product_id_input
 
-    # =====================================================
-    # LOAD CSV
-    # =====================================================
-
+    # load csv
     df = pd.read_csv(csv_path)
 
     row = df[df["product_id"] == product_id]
 
     if row.empty:
-        raise Exception(f"❌ product_id {product_id} not found")
+        raise Exception(f" product_id {product_id} not found")
 
     row = row.iloc[0]
 
     garment_name = str(row["image_path"]).strip()
     garment_path = os.path.join(image_folder, garment_name)
 
-    # =====================================================
-    # METADATA
-    # =====================================================
 
     sleeve = str(row["sleeve"]).lower().strip()
     length_type = str(row["length"]).lower().strip()
@@ -68,10 +54,7 @@ def run_tryon_pipeline(
     print("Type:", "TOP" if is_top else "BOTTOM")
     print("Length:", length_type)
 
-    # =====================================================
-    # LOAD IMAGES
-    # =====================================================
-
+    # load image
     person_rgba = np.array(
         remove(
             Image.open(person_path).convert("RGBA")
@@ -88,10 +71,8 @@ def run_tryon_pipeline(
 
     h, w = person_rgb.shape[:2]
 
-    # =====================================================
-    # POSE DETECTION
-    # =====================================================
-
+ 
+    # detect pose
     mp_pose = mp.solutions.pose
 
     with mp_pose.Pose(static_image_mode=True) as pose:
@@ -99,14 +80,12 @@ def run_tryon_pipeline(
         res = pose.process(person_rgb)
 
     if not res.pose_landmarks:
-        raise Exception("❌ Pose not detected")
+        raise Exception(" Pose not detected")
 
     lm = res.pose_landmarks.landmark
 
-    # =====================================================
-    # BODY LANDMARKS
-    # =====================================================
 
+    # body landmarks
     left_sh = (
         int(lm[12].x * w),
         int(lm[12].y * h)
@@ -141,23 +120,18 @@ def run_tryon_pipeline(
         np.array(left_sh) - np.array(right_sh)
     )
 
-    # =====================================================
-    # GARMENT DETECTION
-    # =====================================================
+    #garnment deteection
 
     alpha = garment_rgba[:, :, 3]
 
     rows = np.where(np.any(alpha > 0, axis=1))[0]
 
     if len(rows) == 0:
-        raise Exception("❌ No garment detected")
+        raise Exception(" No garment detected")
 
     top = rows[0]
     bottom = rows[-1]
 
-    # =====================================================
-    # STRUCTURED SHOULDER SAMPLING
-    # =====================================================
 
     garment_height = bottom - top
 
@@ -167,7 +141,7 @@ def run_tryon_pipeline(
     cols = np.where(alpha[shoulder_scan_y] > 0)[0]
 
     if len(cols) == 0:
-        raise Exception("❌ Unable to detect garment width")
+        raise Exception(" Unable to detect garment width")
 
     # stable shoulder anchors
     g_left = int(np.percentile(cols, 10))
@@ -175,9 +149,7 @@ def run_tryon_pipeline(
 
     garment_width = g_right - g_left
 
-    # =====================================================
-    # SCALE GARMENT USING BODY WIDTH
-    # =====================================================
+    # scaling using body width
 
     scale_x = body_width / garment_width
 
@@ -190,31 +162,20 @@ def run_tryon_pipeline(
         interpolation=cv2.INTER_AREA
     )
 
-    # =====================================================
-    # UPDATE GARMENT POINTS AFTER SCALE
-    # =====================================================
 
     g_left = int(g_left * scale_x)
     g_right = int(g_right * scale_x)
 
-    # IMPORTANT:
-    # this is the sampled shoulder line
-    # NOT resizing logic
     shoulder_scan_y = int(shoulder_scan_y * scale_x)
 
     garment_center_x = (g_left + g_right) // 2
 
-    # =====================================================
-    # POSITIONING
-    # =====================================================
 
     # align sampled shoulder line to body shoulders
     x = shoulder_center[0] - garment_center_x
     y = shoulder_center[1] - shoulder_scan_y
 
-    # =====================================================
-    # LENGTH HANDLING
-    # =====================================================
+    # length adjustment
 
     if is_full_length:
 
@@ -298,9 +259,7 @@ def run_tryon_pipeline(
             garment_scaled = garment_scaled[:-trim, :, :]
 
 
-    # =====================================================
-    # OVERLAY FUNCTION
-    # =====================================================
+    # overlay
 
     def overlay(bg, fg, x, y):
 
@@ -337,9 +296,6 @@ def run_tryon_pipeline(
 
         return bg
 
-    # =====================================================
-    # APPLY OVERLAY
-    # =====================================================
 
     result = overlay(
         person_rgba.copy(),
@@ -348,23 +304,19 @@ def run_tryon_pipeline(
         y
     )
 
-    # =====================================================
-    # SAVE OUTPUT
-    # =====================================================
+    # save output
 
     cv2.imwrite(
         output_path_input,
         cv2.cvtColor(result, cv2.COLOR_RGBA2BGR)
     )
 
-    print("✅ DONE — structured try-on completed")
+    print(" DONE — structured try-on completed")
 
     return output_path_input
 
 
-# =========================================================
-# LOCAL RUN
-# =========================================================
+# local run
 
 if __name__ == "__main__":
 

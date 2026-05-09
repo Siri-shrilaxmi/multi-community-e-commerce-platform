@@ -145,6 +145,7 @@ side poses
 loose or oversized garments
 occlusions (hands crossing body, etc.)
 The system is rule-based, so it does not generalize like learned try-on models
+Currently classifier works for only categories that exist in csv
 
 **4. If you had 2 weeks instead of 72 hours, what would you build differently?**
 Replace geometric overlay with a deep learning-based try-on model

@@ -5,18 +5,14 @@ from transformers import CLIPProcessor, CLIPModel
 from PIL import Image
 import json
 
-# =========================
-# CONFIG
-# =========================
+# path
 embedding_csv = "category_embeddings.csv"
 model_name = "patrickjohncyh/fashion-clip"
 device = "cpu"
 
 
-# =========================
-# LOAD MODEL (once)
-# =========================
-print("\n🔄 Loading CLIP...")
+#load model
+print("\n Loading CLIP...")
 
 model = CLIPModel.from_pretrained(model_name).to(device)
 model.eval()
@@ -24,9 +20,7 @@ model.eval()
 processor = CLIPProcessor.from_pretrained(model_name)
 
 
-# =========================
-# LOAD EMBEDDINGS (once)
-# =========================
+# load embeddings
 df = pd.read_csv(embedding_csv)
 
 categories = df["category"].tolist()
@@ -41,9 +35,6 @@ category_embeddings = F.normalize(category_embeddings, dim=-1)
 print("Loaded categories:", len(categories))
 
 
-# =========================
-# CORE FUNCTION (IMPORTANT)
-# =========================
 def predict(image_path, top_k=1):
 
     image = Image.open(image_path).convert("RGB")
@@ -77,16 +68,14 @@ def predict(image_path, top_k=1):
     return results
 
 
-# =========================
-# CLI MODE (terminal run)
-# =========================
+# local run
 if __name__ == "__main__":
 
     image_path = r"classifier_img\c7.jpg"
 
     results = predict(image_path, top_k=1)
 
-    print("\n🔥 TERMINAL CLASSIFICATION RESULT\n")
+    print("\n  CLASSIFICATION RESULT\n")
 
     for r in results:
         print(f"{r['category']} -> {r['confidence']:.2f}%")

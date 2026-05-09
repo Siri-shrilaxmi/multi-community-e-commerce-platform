@@ -5,31 +5,22 @@ from flask import Flask, render_template, request, send_from_directory
 from recommender import RecommendationEngine
 from try_on import run_tryon_pipeline
 from size_estimation import BodyMeasurementSystem
-
-# 🔥 IMPORT YOUR CLASSIFIER FUNCTION
 from classifier import predict
 
 app = Flask(__name__)
 
-# -----------------------------
-# LOAD DATA
-# -----------------------------
+#load data
 df = pd.read_csv("csv1.csv")
 engine = RecommendationEngine("csv1.csv")
 
-# -----------------------------
-# IMAGE FOLDER
-# -----------------------------
-IMAGE_FOLDER = r"C:\Users\shril\Documents\GitHub\Internship\multi-community-e-commerce-platform\try_on_img"
+# path
+IMAGE_FOLDER = r"try_on_img"
 
 @app.route('/product_image/<filename>')
 def product_image(filename):
     return send_from_directory(IMAGE_FOLDER, filename)
 
 
-# -----------------------------
-# HELPER: CLEAN INPUT
-# -----------------------------
 def clean(val):
     if val is None:
         return None
@@ -37,17 +28,11 @@ def clean(val):
     return val if val != "" else None
 
 
-# -----------------------------
-# HOME (RECOMMEND + TRYON UI)
-# -----------------------------
 @app.route("/", methods=["GET", "POST"])
 def home():
 
     if request.method == "POST":
 
-        # -----------------------------
-        # TRY-ON BUTTON CLICK
-        # -----------------------------
         if request.form.get("action") == "tryon":
 
             product_id = int(request.form["product_id"])
@@ -60,9 +45,7 @@ def home():
                 results=None
             )
 
-        # -----------------------------
-        # NORMAL RECOMMENDATION
-        # -----------------------------
+
         community = clean(request.form.get("community"))
         category = clean(request.form.get("category"))
 
@@ -114,9 +97,7 @@ def classify():
         show_tryon=False
     )
 
-# -----------------------------
-# RUN TRY-ON PIPELINE
-# -----------------------------
+
 @app.route("/run_tryon", methods=["POST"])
 def run_tryon():
 
@@ -148,9 +129,6 @@ def run_tryon():
     )
 
 
-# -----------------------------
-# SIZE RECOMMENDATION
-# -----------------------------
 @app.route("/get_size", methods=["POST"])
 def get_size():
 
@@ -186,16 +164,10 @@ def get_size():
     )
 
 
-# -----------------------------
-# SERVE RESULT IMAGE
-# -----------------------------
 @app.route('/result_image/<filename>')
 def result_image(filename):
     return send_from_directory(".", filename)
 
 
-# -----------------------------
-# RUN
-# -----------------------------
 if __name__ == "__main__":
     app.run(debug=True, use_reloader=False)
